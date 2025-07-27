@@ -2,18 +2,40 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>薛宝仪天天开心</title>
     <script src="https://cdn.tailwindcss.com/3.3.3"></script>
     <style>
         body {
             margin: 0;
+            padding: 0;
             overflow: hidden;
             font-family: 'Arial', sans-serif;
-            background: url('https://gitee.com/crazyhan__5/test/releases/download/sn/bg2.jpg') no-repeat center center fixed;
-            background-size: cover;
             height: 100vh;
             position: relative;
+        }
+        
+        /* 背景图全屏适配核心样式 */
+        .bg-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .fullscreen-bg {
+            position: absolute;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
         }
         
         #emoji-container {
@@ -22,15 +44,6 @@
             height: 100%;
             z-index: 1;
         }
-        @font-face {
-  font-family: '方正喵呜体';
-  src: url('https://jiyiho.cn/drive/down.php/7deb186f3e305bb5015dd447a3b919ba.ttf') format('truetype'), /* 优先使用TTF */
-       url('fonts/方正喵呜体.woff2') format('woff2'),
-       url('fonts/方正喵呜体.woff') format('woff');
-  font-weight: normal;
-  font-style: normal;
-  font-display: block;
-}
         
         .emoji {
             position: absolute;
@@ -47,31 +60,6 @@
             50% { transform: translate(20vw, -10vh) rotate(180deg); }
             75% { transform: translate(-10vw, 15vh) rotate(270deg); }
             100% { transform: translate(0, 0) rotate(360deg); }
-        }
-        
-        #text-container {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2;
-        }
-        
-        .main-text {
-            font-size: 4rem;
-            font-weight: bold;
-            color: #fff;
-            font-family: 方正喵呜体;
-            text-shadow: 3px 3px 5px rgba(0,0,0,0.3), 
-                         -3px -3px 5px rgba(0,0,0,0.3),
-                         3px -3px 5px rgba(0,0,0,0.3),
-                         -3px 3px 5px rgba(0,0,0,0.3);
-            opacity: 0.9;
-            padding: 20px;
-            border-radius: 20px;
-            background-color: rgba(255, 182, 193, 0.3);
         }
         
         /* 音乐控制按钮样式 */
@@ -94,6 +82,7 @@
         
         #music-control:hover {
             background-color: rgba(255, 255, 255, 0.9);
+            transform: scale(1.1);
         }
         
         .music-playing .music-icon {
@@ -128,6 +117,7 @@
             align-items: center;
             font-size: 1.2rem;
             color: #ff6b81;
+            transition: opacity 0.5s ease;
         }
         
         .spinner {
@@ -153,6 +143,14 @@
         <p>页面加载中...</p>
     </div>
     
+    <!-- 背景图容器 -->
+    <div class="bg-container">
+        <img src="https://gitee.com/crazyhan__5/test/releases/download/sn/bg2.jpg" 
+             alt="背景图" 
+             class="fullscreen-bg"
+             onload="hideLoading()">
+    </div>
+    
     <!-- 音乐控制按钮 -->
     <div id="music-control" class="music-playing">
         <i class="music-icon">🎵</i>
@@ -162,13 +160,9 @@
     <!-- 音频元素 -->
     <audio id="bg-music" loop preload="auto">
         <source src="https://gitee.com/crazyhan__5/test/releases/download/sn/lovechoice2.mp3" type="audio/mpeg">
-        <!-- 请替换为实际音乐链接 -->
     </audio>
 
     <div id="emoji-container"></div>
-    <div id="text-container">
-        <h1 class="main-text">薛宝仪天天开心哦~</h1>
-    </div>
 
     <script>
         // 检测是否在微信浏览器中
@@ -184,15 +178,15 @@
         
         // 播放音乐函数
         function playMusic() {
+            bgMusic.volume = 0.5;
             bgMusic.play().then(() => {
                 musicPlaying = true;
                 musicControl.classList.add('music-playing');
-                hideLoading();
                 console.log('音乐播放成功');
             }).catch(error => {
                 console.error('音乐播放失败:', error);
-                // 尝试其他方式触发播放
-                setTimeout(tryWechatPlay, 1000);
+                // 显示手动播放提示
+                loadingMask.innerHTML += '<p style="margin-top:10px;">点击音乐图标播放背景音乐</p>';
             });
         }
         
@@ -224,67 +218,19 @@
         function initWechatMusic() {
             if (!isWechatBrowser()) return;
             
-            // 加载微信JS-SDK
-            const script = document.createElement('script');
-            script.src = 'https://res.wx.qq.com/open/js/jweixin-1.6.0.js';
-            document.body.appendChild(script);
-            
-            script.onload = function() {
-                console.log('微信JS-SDK加载成功');
-                
-                // 微信JS-SDK初始化
-                if (window.wx) {
-                    wx.config({
-                        debug: false,
-                        appId: '',
-                        timestamp: 0,
-                        nonceStr: '',
-                        signature: '',
-                        jsApiList: []
-                    });
-                    
-                    wx.ready(function() {
-                        console.log('微信JS-SDK初始化成功');
-                        // 微信环境下的自动播放
-                        document.addEventListener('WeixinJSBridgeReady', function() {
-                            playMusic();
-                        }, false);
-                        
-                        // 尝试在用户首次交互时播放
-                        document.addEventListener('touchstart', function() {
-                            if (!musicPlaying) {
-                                playMusic();
-                            }
-                        }, { once: true });
-                    });
-                    
-                    wx.error(function(res) {
-                        console.error('微信JS-SDK初始化失败:', res);
-                        // 初始化失败时尝试其他方法
-                        tryWechatPlay();
-                    });
-                } else {
-                    tryWechatPlay();
+            // 尝试在用户首次交互时播放
+            document.addEventListener('touchstart', function() {
+                if (!musicPlaying) {
+                    playMusic();
                 }
-            };
+            }, { once: true });
             
-            script.onerror = function() {
-                console.error('微信JS-SDK加载失败');
-                tryWechatPlay();
-            };
-        }
-        
-        // 尝试在微信环境下播放音乐
-        function tryWechatPlay() {
-            if (!isWechatBrowser()) return;
-            
-            // 微信浏览器中尝试通过WeixinJSBridge播放
+            // 微信环境下的自动播放处理
             if (typeof WeixinJSBridge !== 'undefined') {
                 WeixinJSBridge.invoke('getNetworkType', {}, function(res) {
                     playMusic();
                 });
             } else {
-                // 如果WeixinJSBridge未加载完成，则监听其ready事件
                 document.addEventListener('WeixinJSBridgeReady', function() {
                     playMusic();
                 }, false);
@@ -321,44 +267,36 @@
                 initNormalBrowser();
             }
             
-            // 为了兼容各种情况，添加多个可能的播放触发点
-            setTimeout(function() {
-                if (!musicPlaying) {
-                    playMusic();
-                }
-            }, 2000);
+            // 创建漂浮emoji
+            const emojis = ['🎀', '✨', '❤️', '🌸', '🎈', '🎁', '🍭', '🌈', '💖', '🌟', '💐', '💝'];
+            const emojiContainer = document.getElementById('emoji-container');
             
-            // 页面可见时尝试播放
-            document.addEventListener('visibilitychange', function() {
-                if (document.visibilityState === 'visible' && !musicPlaying) {
-                    playMusic();
+            for (let i = 0; i < 30; i++) {
+                const emoji = document.createElement('div');
+                emoji.className = 'emoji';
+                emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                emoji.style.left = Math.random() * 100 + 'vw';
+                emoji.style.top = Math.random() * 100 + 'vh';
+                emoji.style.fontSize = (Math.random() * 2.5 + 1) + 'rem';
+                emoji.style.animationDuration = (Math.random() * 15 + 10) + 's';
+                emoji.style.animationDelay = Math.random() * 5 + 's';
+                // 随机旋转方向
+                if (Math.random() > 0.5) {
+                    emoji.style.animationDirection = 'reverse';
                 }
-            });
+                emojiContainer.appendChild(emoji);
+            }
         });
-        
-        // 创建漂浮emoji - 已添加恶魔相关emoji
-        const emojis = ['🎀', '✨', '❤️', '🌸', '🎈', '🎁', '🍭', '🌈'];
-        const emojiContainer = document.getElementById('emoji-container');
-        
-        for (let i = 0; i < 20; i++) { // 增加emoji数量至20个
-            const emoji = document.createElement('div');
-            emoji.className = 'emoji';
-            emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-            emoji.style.left = Math.random() * 100 + 'vw';
-            emoji.style.top = Math.random() * 100 + 'vh';
-            emoji.style.fontSize = (Math.random() * 2.5 + 1) + 'rem'; // 增加emoji大小范围
-            emoji.style.animationDuration = (Math.random() * 15 + 10) + 's'; // 增加动画持续时间范围
-            emoji.style.animationDelay = Math.random() * 5 + 's';
-            emojiContainer.appendChild(emoji);
-        }
 
-        // 响应式调整
+        // 窗口大小变化时重新适配背景图
         window.addEventListener('resize', () => {
-            const text = document.querySelector('.main-text');
-            if (window.innerWidth < 768) {
-                text.style.fontSize = '2.5rem';
-            } else {
-                text.style.fontSize = '4rem';
+            const bgImg = document.querySelector('.fullscreen-bg');
+            if (bgImg) {
+                // 强制重绘背景图
+                bgImg.style.transform = 'translate(-50%, -50%) scale(1.001)';
+                setTimeout(() => {
+                    bgImg.style.transform = 'translate(-50%, -50%)';
+                }, 50);
             }
         });
     </script>
