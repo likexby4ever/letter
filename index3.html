@@ -104,7 +104,7 @@
             display: none;
         }
         
-        /* 新增：加载提示样式 */
+        /* 加载提示样式 */
         #loading-mask {
             position: fixed;
             top: 0;
@@ -138,7 +138,7 @@
     </style>
 </head>
 <body>
-    <!-- 新增：加载提示 -->
+    <!-- 加载提示 -->
     <div id="loading-mask">
         <div class="spinner"></div>
         <p>页面加载中...</p>
@@ -325,6 +325,32 @@
                     playMusic();
                 }
             });
+        });
+        
+        // 创建漂浮emoji - 已添加恶魔相关emoji
+        const emojis = ['🎀', '✨', '❤️', '🌸', '🎈', '🎁', '🍭', '🌈'];
+        const emojiContainer = document.getElementById('emoji-container');
+        
+        for (let i = 0; i < 20; i++) { // 增加emoji数量至20个
+            const emoji = document.createElement('div');
+            emoji.className = 'emoji';
+            emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            emoji.style.left = Math.random() * 100 + 'vw';
+            emoji.style.top = Math.random() * 100 + 'vh';
+            emoji.style.fontSize = (Math.random() * 2.5 + 1) + 'rem'; // 增加emoji大小范围
+            emoji.style.animationDuration = (Math.random() * 15 + 10) + 's'; // 增加动画持续时间范围
+            emoji.style.animationDelay = Math.random() * 5 + 's';
+            emojiContainer.appendChild(emoji);
+        }
+
+        // 响应式调整
+        window.addEventListener('resize', () => {
+            const text = document.querySelector('.main-text');
+            if (window.innerWidth < 768) {
+                text.style.fontSize = '2.5rem';
+            } else {
+                text.style.fontSize = '4rem';
+            }
         });
     </script>
 
