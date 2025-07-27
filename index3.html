@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>薛宝仪天天开心</title>
+    <script src="https://cdn.tailwindcss.com/3.3.3"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            background: url('https://gitee.com/crazyhan__5/test/releases/download/sn/bg.png') no-repeat center center fixed;
+            background-size: cover;
+            height: 100vh;
+            position: relative;
+        }
+        
+        #emoji-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .emoji {
+            position: absolute;
+            font-size: 2rem;
+            user-select: none;
+            animation: float 15s infinite linear;
+            opacity: 0.8;
+            text-shadow: 0 0 5px rgba(255,255,255,0.5);
+        }
+        
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(10vw, 10vh) rotate(90deg); }
+            50% { transform: translate(20vw, -10vh) rotate(180deg); }
+            75% { transform: translate(-10vw, 15vh) rotate(270deg); }
+            100% { transform: translate(0, 0) rotate(360deg); }
+        }
+        
+        #text-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2;
+        }
+        
+        .main-text {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #fff;
+            font-family: 方正喵呜体;
+            text-shadow: 3px 3px 5px rgba(0,0,0,0.3), 
+                         -3px -3px 5px rgba(0,0,0,0.3),
+                         3px -3px 5px rgba(0,0,0,0.3),
+                         -3px 3px 5px rgba(0,0,0,0.3);
+            opacity: 0.9;
+            padding: 20px;
+            border-radius: 20px;
+            background-color: rgba(255, 182, 193, 0.3);
+        }
+        
+        /* 音乐控制按钮样式 */
+        #music-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        #music-control:hover {
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .music-playing .music-icon {
+            display: none;
+        }
+        
+        .music-playing .music-pause-icon {
+            display: inline-block;
+        }
+        
+        .music-icon, .music-pause-icon {
+            font-size: 24px;
+            color: #ff6b81;
+        }
+        
+        .music-pause-icon {
+            display: none;
+        }
+        
+        /* 新增：加载提示样式 */
+        #loading-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            color: #ff6b81;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            margin: 20px;
+            border: 4px solid #ff6b81;
+            border-radius: 50%;
+            border-top: 4px solid transparent;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 新增：加载提示 -->
+    <div id="loading-mask">
+        <div class="spinner"></div>
+        <p>页面加载中...</p>
+    </div>
+    
+    <!-- 音乐控制按钮 -->
+    <div id="music-control" class="music-playing">
+        <i class="music-icon">🎵</i>
+        <i class="music-pause-icon">⏸️</i>
+    </div>
+    
+    <!-- 音频元素 -->
+    <audio id="bg-music" loop preload="auto">
+        <source src="https://gitee.com/crazyhan__5/test/releases/download/sn/lovechoice2.mp3" type="audio/mpeg">
+        <!-- 请替换为实际音乐链接 -->
+    </audio>
+
+    <div id="emoji-container"></div>
+    <div id="text-container">
+        <h1 class="main-text">薛宝仪天天开心哦~</h1>
+    </div>
+
+    <script>
+        // 检测是否在微信浏览器中
+        function isWechatBrowser() {
+            return /MicroMessenger/i.test(navigator.userAgent);
+        }
+        
+        // 音乐控制变量
+        const musicControl = document.getElementById('music-control');
+        const bgMusic = document.getElementById('bg-music');
+        const loadingMask = document.getElementById('loading-mask');
+        let musicPlaying = false;
+        
+        // 播放音乐函数
+        function playMusic() {
+            bgMusic.play().then(() => {
+                musicPlaying = true;
+                musicControl.classList.add('music-playing');
+                hideLoading();
+                console.log('音乐播放成功');
+            }).catch(error => {
+                console.error('音乐播放失败:', error);
+                // 尝试其他方式触发播放
+                setTimeout(tryWechatPlay, 1000);
+            });
+        }
+        
+        // 暂停音乐函数
+        function pauseMusic() {
+            bgMusic.pause();
+            musicPlaying = false;
+            musicControl.classList.remove('music-playing');
+        }
+        
+        // 切换音乐状态
+        function toggleMusic() {
+            if (musicPlaying) {
+                pauseMusic();
+            } else {
+                playMusic();
+            }
+        }
+        
+        // 隐藏加载提示
+        function hideLoading() {
+            loadingMask.style.opacity = '0';
+            setTimeout(() => {
+                loadingMask.style.display = 'none';
+            }, 500);
+        }
+        
+        // 微信环境下的音乐播放处理
+        function initWechatMusic() {
+            if (!isWechatBrowser()) return;
+            
+            // 加载微信JS-SDK
+            const script = document.createElement('script');
+            script.src = 'https://res.wx.qq.com/open/js/jweixin-1.6.0.js';
+            document.body.appendChild(script);
+            
+            script.onload = function() {
+                console.log('微信JS-SDK加载成功');
+                
+                // 微信JS-SDK初始化
+                if (window.wx) {
+                    wx.config({
+                        debug: false,
+                        appId: '',
+                        timestamp: 0,
+                        nonceStr: '',
+                        signature: '',
+                        jsApiList: []
+                    });
+                    
+                    wx.ready(function() {
+                        console.log('微信JS-SDK初始化成功');
+                        // 微信环境下的自动播放
+                        document.addEventListener('WeixinJSBridgeReady', function() {
+                            playMusic();
+                        }, false);
+                        
+                        // 尝试在用户首次交互时播放
+                        document.addEventListener('touchstart', function() {
+                            if (!musicPlaying) {
+                                playMusic();
+                            }
+                        }, { once: true });
+                    });
+                    
+                    wx.error(function(res) {
+                        console.error('微信JS-SDK初始化失败:', res);
+                        // 初始化失败时尝试其他方法
+                        tryWechatPlay();
+                    });
+                } else {
+                    tryWechatPlay();
+                }
+            };
+            
+            script.onerror = function() {
+                console.error('微信JS-SDK加载失败');
+                tryWechatPlay();
+            };
+        }
+        
+        // 尝试在微信环境下播放音乐
+        function tryWechatPlay() {
+            if (!isWechatBrowser()) return;
+            
+            // 微信浏览器中尝试通过WeixinJSBridge播放
+            if (typeof WeixinJSBridge !== 'undefined') {
+                WeixinJSBridge.invoke('getNetworkType', {}, function(res) {
+                    playMusic();
+                });
+            } else {
+                // 如果WeixinJSBridge未加载完成，则监听其ready事件
+                document.addEventListener('WeixinJSBridgeReady', function() {
+                    playMusic();
+                }, false);
+            }
+        }
+        
+        // 普通浏览器环境下的自动播放处理
+        function initNormalBrowser() {
+            // 尝试自动播放
+            playMusic();
+            
+            // 如果自动播放失败，则在用户首次交互时播放
+            const startMusicOnInteraction = function() {
+                if (!musicPlaying) {
+                    playMusic();
+                }
+                document.removeEventListener('touchstart', startMusicOnInteraction);
+                document.removeEventListener('click', startMusicOnInteraction);
+            };
+            
+            document.addEventListener('touchstart', startMusicOnInteraction, { once: true });
+            document.addEventListener('click', startMusicOnInteraction, { once: true });
+        }
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', function() {
+            // 绑定音乐控制按钮事件
+            musicControl.addEventListener('click', toggleMusic);
+            
+            // 区分微信浏览器和普通浏览器处理
+            if (isWechatBrowser()) {
+                initWechatMusic();
+            } else {
+                initNormalBrowser();
+            }
+            
+            // 为了兼容各种情况，添加多个可能的播放触发点
+            setTimeout(function() {
+                if (!musicPlaying) {
+                    playMusic();
+                }
+            }, 2000);
+            
+            // 页面可见时尝试播放
+            document.addEventListener('visibilitychange', function() {
+                if (document.visibilityState === 'visible' && !musicPlaying) {
+                    playMusic();
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

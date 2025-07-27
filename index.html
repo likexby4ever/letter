@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>特别信件</title>
+    <script src="https://cdn.tailwindcss.com/3.3.3"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <style>
+        @font-face {
+            font-family: 'Handwriting';
+            src: local('Comic Sans MS'), local('楷体');
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            font-family: 'Handwriting', sans-serif;
+            background: linear-gradient(135deg, #FFF5F8 0%, #FFE6F0 100%);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255,255,255,0.1) 1px, transparent 1px),
+                radial-gradient(circle at 90% 80%, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 100px 100px;
+        }
+        
+        /* 信封容器 */
+        .envelope-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.3s ease;
+        }
+        
+        /* 信封主体 */
+        .envelope {
+            width: 60%;
+            max-width: 600px;
+            height: calc(60vw * 1.4);
+            max-height: 840px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.2));
+            transform-origin: center;
+        }
+        
+        .envelope:hover {
+            transform: translateY(-8px) rotate(3deg);
+        }
+        
+        .envelope:active {
+            transform: translateY(0) scale(0.98);
+        }
+        
+        /* 信封正面 */
+        .envelope-front {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: #FFF8F0;
+            border-radius: 5px;
+            z-index: 2;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        /* 信封封口 */
+        .envelope-flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 40%;
+            background-color: #FFF8F0;
+            border-radius: 5px 5px 0 0;
+            transform-origin: top;
+            transform: rotateX(0deg);
+            transition: transform 0.5s ease;
+            z-index: 3;
+            box-shadow: 0 -5px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* 丝带蝴蝶结 */
+        .ribbon {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: #FF85A2;
+            clip-path: polygon(50% 0%, 80% 10%, 100% 35%, 100% 70%, 80% 90%, 50% 100%, 20% 90%, 0% 70%, 0% 35%, 20% 10%);
+            z-index: 4;
+            transition: all 0.3s ease;
+        }
+        
+        .envelope:active .ribbon {
+            transform: rotate(15deg) translateY(5px);
+        }
+        
+        /* 蜡封 */
+        .wax-seal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            background-color: #FF85A2;
+            border-radius: 50%;
+            z-index: 4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .wax-seal::after {
+            content: "❤️";
+            font-size: 16px;
+            position: absolute;
+        }
+        
+        /* 地址标签 */
+        .address-label {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 14px;
+            transform: rotate(-5deg);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 2;
+        }
+        @font-face {
+             font-family: '方正喵呜体';
+             src: url('/fonts/方正喵呜体.woff2') format('woff2'),
+                url('/fonts/方正喵呜体.woff') format('woff');
+             font-weight: normal;
+                font-style: normal;
+                font-display: swap;
+                    }
+        
+        .address-label::before {
+            content: "To: 小宝";
+            font-family: '方正喵呜体', cursive;
+            color: #FF85A2;
+        }
+        
+        /* 点击提示 */
+        .click-hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #FF85A2;
+            font-size: 18px;
+            text-align: center;
+            animation: pulse 2s infinite ease-in-out;
+            z-index: 5;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+        
+        /* 终端窗口 */
+        .terminal-window {
+            width: 90%;
+            max-width: 800px;
+            margin: 20px auto;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .terminal-header {
+            background-color: #2A004D;
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #3D0075;
+            position: relative;
+        }
+        
+        .terminal-progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background-color: #00FFCC;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .terminal-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .terminal-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .terminal-btn-close { background-color: #FF5F56; }
+        .terminal-btn-min { background-color: #FFBD2E; }
+        .terminal-btn-max { background-color: #27C93F; }
+        
+        .terminal-title {
+            margin-left: 15px;
+            font-size: 14px;
+            color: #BB86FC;
+            font-family: 'Consolas', monospace;
+        }
+        
+        .terminal-body {
+            background-color: #2A004D;
+            padding: 15px;
+            font-size: 16px;
+            line-height: 1.5;
+            min-height: 300px;
+            position: relative;
+            color: #00FFCC;
+            font-family: 'Consolas', monospace;
+            overflow-y: auto;
+        }
+        
+        .terminal-body::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .terminal-body::-webkit-scrollbar-thumb {
+            background-color: #00FFCC;
+            border-radius: 4px;
+        }
+        
+        .terminal-body::-webkit-scrollbar-track {
+            background-color: #3D0075;
+        }
+        
+        .terminal-line {
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+        }
+        
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background-color: #00FFCC;
+            opacity: 1;
+            animation: blink 0.7s infinite ease-in-out;
+            vertical-align: middle;
+            margin-left: 5px;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        .image-placeholder {
+            color: #BB86FC;
+            cursor: pointer;
+            border: 1px dashed #BB86FC;
+            padding: 10px;
+            margin: 10px 0;
+            display: inline-block;
+            border-radius: 5px;
+            font-family: 'Consolas', monospace;
+        }
+        
+        .image-preview {
+            display: none;
+            max-width: 80%;
+            margin: 10px auto;
+            border-radius: 10px;
+            border: 2px solid #00FFCC;
+        }
+        
+        /* 粒子世界 */
+        .particle-world {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #FFF0F5 0%, #F0E6FF 100%);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            overflow: hidden;
+        }
+        
+        .character {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            z-index: 2;
+        }
+        
+        .kuromi {
+            background-image: url('https://s.coze.cn/image/HIstWGIVZsU/');
+            top: 20px;
+            left: 20px;
+        }
+        
+        .cinnamoroll {
+            background-image: url('https://s.coze.cn/image/HIstWGIVZsU/');
+            bottom: 20px;
+            right: 20px;
+        }
+        
+        .cloud {
+            position: absolute;
+            width: 60px;
+            height: 30px;
+            background-color: white;
+            border-radius: 30px;
+            opacity: 0.7;
+            z-index: 1;
+            animation: float 15s infinite linear;
+        }
+        
+        .star {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-image: url('https://s.coze.cn/image/HIstWGIVZsU/');
+            background-size: contain;
+            z-index: 1;
+            animation: twinkle 3s infinite ease-in-out;
+        }
+        
+        @keyframes float {
+            0% { transform: translateX(-100px); }
+            100% { transform: translateX(calc(100vw + 100px)); }
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        
+        .particle-text {
+            position: relative;
+            font-size: 32px;
+            font-weight: bold;
+            color: #FF85A2;
+            margin: 20px 0;
+            z-index: 3;
+            animation: float-text 3s infinite ease-in-out;
+        }
+        
+        @keyframes float-text {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .heart-animation {
+            width: 50px;
+            height: 50px;
+            background-color: #FF85A2;
+            border-radius: 50%;
+            margin-top: 20px;
+            animation: pulse 1.5s infinite ease-in-out;
+            position: relative;
+            z-index: 3;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+        }
+        
+        /* 表情粒子 */
+        .emoji-particle {
+            position: absolute;
+            font-size: 24px;
+            user-select: none;
+            pointer-events: none;
+            z-index: 2;
+            animation: float-down 10s linear infinite;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+        
+        .emoji-particle:hover {
+            transform: scale(1.5) rotate(15deg);
+            opacity: 1;
+        }
+        
+        @keyframes float-down {
+            0% { transform: translateY(-100px); }
+            100% { transform: translateY(calc(100vh + 100px)); }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .envelope {
+                width: 80%;
+                height: calc(80vw * 1.4);
+            }
+            
+            .click-hint {
+                font-size: 16px;
+            }
+            
+            .terminal-body {
+                font-size: 14px;
+            }
+            
+            .particle-text {
+                font-size: 24px;
+            }
+            
+            .emoji-particle {
+                font-size: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .envelope {
+                width: 90%;
+                height: calc(90vw * 1.4);
+            }
+            
+            .click-hint {
+                font-size: 14px;
+            }
+            
+            .terminal-body {
+                font-size: 12px;
+            }
+            
+            .particle-text {
+                font-size: 20px;
+            }
+            
+            .emoji-particle {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 信封部分 -->
+    <div class="envelope-container" id="envelopeContainer">
+        <div class="envelope" id="envelope">
+            <div class="envelope-front"></div>
+            <div class="envelope-flap"></div>
+            <div class="ribbon"></div>
+            <div class="wax-seal"></div>
+            <div class="address-label"></div>
+            <div class="click-hint">点击这里拆开 💌</div>
+        </div>
+    </div>
+    
+    <!-- 终端窗口 -->
+    <div class="terminal-window" id="terminalWindow">
+        <div class="terminal-progress" id="terminalProgress"></div>
+        <div class="terminal-header">
+            <div class="terminal-buttons">
+                <div class="terminal-btn terminal-btn-close"></div>
+                <div class="terminal-btn terminal-btn-min"></div>
+                <div class="terminal-btn terminal-btn-max"></div>
+            </div>
+            <div class="terminal-title">Letter.exe - 正在输入...</div>
+        </div>
+        <div class="terminal-body" id="terminalContent">
+            <!-- 内容将由JavaScript动态生成 -->
+        </div>
+    </div>
+    
+    <!-- 粒子世界 -->
+    <div class="particle-world" id="particleWorld">
+        <div class="character kuromi"></div>
+        <div class="character cinnamoroll"></div>
+        <canvas id="particleCanvas"></canvas>
+        <div class="particle-text" id="particleText"></div>
+        <div class="heart-animation">♥</div>
+        <!-- 表情粒子将由JavaScript动态生成 -->
+    </div>
+    
+    <!-- 背景音乐 -->
+    <audio id="bgMusic" loop>
+        <source src="https://music.163.com/song/media/outer/url?id=1824045033.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const envelope = document.getElementById('envelope');
+            const envelopeContainer = document.getElementById('envelopeContainer');
+            const terminalWindow = document.getElementById('terminalWindow');
+            const terminalContent = document.getElementById('terminalContent');
+            const terminalProgress = document.getElementById('terminalProgress');
+            const particleWorld = document.getElementById('particleWorld');
+            const particleText = document.getElementById('particleText');
+            const particleCanvas = document.getElementById('particleCanvas');
+            const bgMusic = document.getElementById('bgMusic');
+            
+            // 表情库
+            const emojis = ['😊', '❤️', '✨', '🐰', '🌸', '💖', '🌟', '🦄', '🍭', '🌺', '🌹', '💕'];
+            
+            // 点击信封
+            envelope.addEventListener('click', function() {
+                // 播放信封打开音效
+                const openSound = new Audio('https://www.soundjay.com/mechanical/sounds/envelope-open-01.mp3');
+                openSound.play();
+                
+                // 信封打开动画
+                envelope.querySelector('.envelope-flap').style.transform = 'rotateX(180deg)';
+                envelope.querySelector('.ribbon').style.transform = 'rotate(15deg) translateY(5px)';
+                
+                // 等待一段时间后跳转到index2.html
+                setTimeout(function() {
+                    window.location.href = 'index2.html';
+                }, 1000); // 1秒后跳转
+            });
+        });
+    </script>
+</body>
+</html>

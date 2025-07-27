@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>特别信件</title>
+    <script src="https://cdn.tailwindcss.com/3.3.3"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <style>
+@font-face {
+  font-family: '方正喵呜体';
+  src: url('/fonts/方正喵呜体.woff2') format('woff2'),
+       url('/fonts/方正喵呜体.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+        
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            font-family: 'Consolas', monospace;
+            background-color: #2A004D;
+            color: #03DAC6;
+        }
+        
+        /* 终端窗口样式 */
+        .terminal-window {
+            width: 90%;
+            max-width: 800px;
+            margin: 20px auto;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            display: block;
+        }
+        
+        .terminal-header {
+            background-color: #1A0038;
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #3D0075;
+            position: relative;
+        }
+        
+        .terminal-progress {
+            position: absolute;
+            font-family: 方正喵呜体;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background-color: #03DAC6;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .terminal-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .terminal-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .terminal-btn-close { background-color: #FF5F56; }
+        .terminal-btn-min { background-color: #FFBD2E; }
+        .terminal-btn-max { background-color: #27C93F; }
+        
+        .terminal-title {
+            margin-left: 15px;
+            font-size: 14px;
+            color: #BB86FC;
+        }
+        
+        .terminal-body {
+            background-color: #2A004D;
+            padding: 15px;
+            font-size: 16px;
+            line-height: 1.5;
+            min-height: 300px;
+            position: relative;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .terminal-line {
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+            font-family: 方正喵呜体;
+            text-shadow: 0 0 0.5px #03DAC6;
+        }
+        
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            font-family: 方正喵呜体;
+            height: 16px;
+            background-color: #03DAC6;
+            opacity: 1;
+            animation: blink 1s infinite ease-in-out;
+            vertical-align: middle;
+            margin-left: 5px;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        .image-placeholder {
+            color: #BB86FC;
+            cursor: pointer;
+            border: 1px dashed #BB86FC;
+            padding: 10px;
+            margin: 10px 0;
+            display: inline-block;
+            border-radius: 5px;
+        }
+        
+        .image-preview {
+            display: none;
+            max-width: 80%;
+            margin: 10px auto;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            animation: borderExpand 0.5s forwards;
+        }
+        
+        @keyframes borderExpand {
+            from { border-color: transparent; }
+            to { border-color: #03DAC6; }
+        }
+        
+        /* 神秘世界样式 */
+        .mystery-world {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #FFF0F5 0%, #FFE0F0 100%);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            font-family: 'Comic Sans MS', sans-serif;
+            overflow: hidden;
+        }
+        
+        .particle-text {
+            font-size: 32px;
+            font-weight: bold;
+            background: linear-gradient(to right, #FF69B4, #B0E0E6, #E6E6FA, #FF69B4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .character-container {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .character {
+            width: 150px;
+            height: 150px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            position: relative;
+        }
+        
+        .kuromi {
+            background-image: url('https://s.coze.cn/image/HIstWGIVZsU/');
+            animation: wave 2s infinite ease-in-out;
+        }
+        
+        .cinnamoroll {
+            background-image: url('https://s.coze.cn/image/HIstWGIVZsU/');
+            animation: fly 3s infinite ease-in-out;
+        }
+        
+        @keyframes wave {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(10deg); }
+            50% { transform: rotate(0deg); }
+            75% { transform: rotate(-10deg); }
+        }
+        
+        @keyframes fly {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        @keyframes tongue {
+            0%, 95% { opacity: 0; }
+            96%, 98% { opacity: 1; }
+            99%, 100% { opacity: 0; }
+        }
+        
+        @keyframes earFlap {
+            0%, 100% { transform: translateX(-50%) rotate(0deg); }
+            50% { transform: translateX(-50%) rotate(10deg); }
+        }
+        
+        .heart-animation {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(to right, #FF69B4, #FFB6C1);
+            border-radius: 50%;
+            margin-top: 20px;
+            animation: pulse 1.5s infinite ease-in-out;
+            position: relative;
+            z-index: 2;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        
+        .falling-heart, .falling-star, .falling-note {
+            position: absolute;
+            font-size: 20px;
+            animation: falling linear infinite;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        @keyframes falling {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(calc(100vh + 100px)) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .mood-emoji {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            animation: emojiChange 8s infinite;
+            z-index: 2;
+        }
+        
+        @keyframes emojiChange {
+            0% { content: '😊'; }
+            20% { content: '😍'; }
+            40% { content: '🥰'; }
+            60% { content: '😘'; }
+            80% { content: '🤗'; }
+            100% { content: '😊'; }
+        }
+        
+        /* 按钮样式 */
+        .mystery-button {
+            display: none;
+            width: 200px;
+            margin: 30px auto;
+            padding: 12px 20px;
+            background: linear-gradient(to right, #03DAC6, #018786);
+            color: #2A004D;
+            text-align: center;
+            border-radius: 20px;
+            font-size: 18px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            font-family: 'Consolas', monospace;
+            opacity: 0;
+            z-index: 2;
+        }
+        
+        .mystery-button:hover {
+            transform: scale(1.05);
+        }
+        
+        .mystery-button:active {
+            transform: scale(0.95);
+        }
+        
+        /* 音乐控制 */
+        .music-control {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: #03DAC6;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #2A004D;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            font-size: 16px;
+            background-image: url('https://s.coze.cn/image/HIstWGIVZsU/');
+            background-size: 60%;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        
+        /* 粒子系统 */
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* 音频引导层 */
+        #audioInitiator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            background-color: rgba(42, 0, 77, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .audio-guide {
+            text-align: center;
+            color: #03DAC6;
+            padding: 30px;
+            border-radius: 10px;
+            background-color: rgba(26, 0, 56, 0.9);
+            max-width: 300px;
+            font-family: '方正喵呜体';
+            box-shadow: 0 0 20px rgba(3, 218, 198, 0.3);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 600px) {
+            .character {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .particle-text {
+                font-size: 24px;
+            }
+            
+            .mystery-button {
+                width: 180px;
+                font-size: 16px;
+            }
+            
+            .audio-guide {
+                max-width: 250px;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 音频播放引导层（解决浏览器自动播放限制） -->
+    <div id="audioInitiator" class="audio-initiator">
+        <div class="audio-guide">
+            <h2 style="font-size: 24px; margin-bottom: 15px;">点击开始</h2>
+            <p>为了播放背景音乐</p>
+            <p style="font-size: 14px; margin-top: 15px;">（浏览器政策要求首次交互后才能播放音频）</p>
+            <div style="margin-top: 20px; font-size: 36px;">▶️</div>
+        </div>
+    </div>
+
+    <!-- 终端窗口 -->
+    <div class="terminal-window" id="terminalWindow">
+        <div class="terminal-progress" id="terminalProgress"></div>
+        <div class="terminal-header">
+            <div class="terminal-buttons">
+                <div class="terminal-btn terminal-btn-close"></div>
+                <div class="terminal-btn terminal-btn-min"></div>
+                <div class="terminal-btn terminal-btn-max"></div>
+            </div>
+            <div class="terminal-title">Letter.exe - 命令提示符</div>
+        </div>
+        <div class="terminal-body" id="terminalContent">
+            <!-- 内容将由JavaScript动态生成 -->
+        </div>
+        
+        <button class="mystery-button" id="mysteryButton">
+            进入神秘世界 🌈
+        </button>
+    </div>
+    
+    <!-- 神秘世界（调整为跳转过渡页面） -->
+    <div class="mystery-world" id="mysteryWorld">
+        <div id="particles-js"></div>
+        <div class="particle-text" id="particleText">正在跳转到新页面...</div>
+        <div class="mood-emoji">😊</div>
+        <div class="heart-animation"></div>
+    </div>
+    
+    <!-- 音乐控制 -->
+    <div class="music-control" id="musicControl">
+        <i class="fas fa-music" style="display: none;"></i>
+    </div>
+    
+    <!-- 背景音乐 -->
+    <audio id="bgMusic" loop>
+        <source src="https://gitee.com/crazyhan__5/test/releases/download/sn/lovechoice1.mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const terminalWindow = document.getElementById('terminalWindow');
+            const terminalContent = document.getElementById('terminalContent');
+            const terminalProgress = document.getElementById('terminalProgress');
+            const mysteryButton = document.getElementById('mysteryButton');
+            const mysteryWorld = document.getElementById('mysteryWorld');
+            const bgMusic = document.getElementById('bgMusic');
+            const musicControl = document.getElementById('musicControl');
+            const particleText = document.getElementById('particleText');
+            const audioInitiator = document.getElementById('audioInitiator');
+            
+            // 处理音频播放（解决浏览器限制）
+            function initAudio() {
+                // 尝试自动播放
+                bgMusic.volume = 0.3;
+                bgMusic.play().then(() => {
+                    audioInitiator.style.display = 'none';
+                }).catch(err => {
+                    console.log('自动播放失败，等待用户交互：', err);
+                });
+
+                // 监听用户首次交互后播放
+                function handleFirstInteraction() {
+                    bgMusic.play().then(() => {
+                        audioInitiator.style.display = 'none';
+                        console.log('用户交互后播放成功');
+                    }).catch(err => {
+                        console.log('用户交互后仍无法播放：', err);
+                    });
+                    
+                    // 移除事件监听，避免重复触发
+                    document.removeEventListener('click', handleFirstInteraction);
+                    document.removeEventListener('touchstart', handleFirstInteraction);
+                    document.removeEventListener('keydown', handleFirstInteraction);
+                }
+                
+                // 绑定多种用户交互事件
+                document.addEventListener('click', handleFirstInteraction);
+                document.addEventListener('touchstart', handleFirstInteraction);
+                document.addEventListener('keydown', handleFirstInteraction);
+            }
+            
+            // 初始化音频处理
+            initAudio();
+            
+            // 信件内容
+            const content = [
+                { 
+                    text: "> 🙂你好呀小宝~很高兴能够在这个地方和你说说心里话~",
+                    emoji: "🙂",
+                },
+                { 
+                    text: "> ✨ 还记得当时是在7月17日早上10：18的这一场游戏中认识的小宝，我捡到猫猫AK扔给小宝，小宝说了句谢谢火男等等的，当时就觉得小宝好可爱好温柔的，于是就想认识一下，这局我虽然打的不是很好，但是我很幸运，很幸运能遇到这么温柔可爱的小宝🤭",
+                    emoji: "✨",
+                    hasImage: true,
+                    imageDesc: "对局截图",
+                    imageUrl: "https://youke1.picui.cn/s1/2025/07/27/6885b7f9aac63.jpg"
+                },
+                { 
+                    text: "> 🌙 小宝是我对局中的力量，有了小宝在，小宝的鼓励，能让我鼓起勇气去全力战斗，虽然有时候也犯了低级的错误，但是我是真的真的很想要带小宝赢，能够让小宝开心，那就是我最大的心愿。我也曾惹过小宝生气，那是万分不该的，我就只有这么一个小宝，气走了怎么办TvT.......",
+                    emoji: "🌙",
+                },
+                { 
+                    text: "> 😭 小宝,其实那天的话我还没说完。其实周四我看到你和博勒，熬夜通宵打游戏，然后打得很好很好，俺的消息一直被挂着，心里布吉岛为什么会泛起一丝的也许是吃醋的感觉吧，当时我有在想，如果我也有博勒一样厉害，那就好了，能够带着小宝一起爽玩，获得胜利。可是，当我看到那冷淡的消息框，眼泪不自主的就落下了，心里很不是滋味，我在想，这是为什么呢...我是不是又惹到宝宝了...是不是做错了什么...是不是...我不够好......我也希望能够被宝宝重视...我平常也不希望宝宝的消息被压下去，所以一般都是秒回，哪怕没有及时回到，我也已经挂到置顶，不能忘记宝宝，当我收到宝宝来找我的消息时，眼泪终于止住了...随之而来的是开心，终于.......//其实小宝，你的每一条消息，我都很期待。“我讨厌等 等雨停 等排队 等食堂吃饭 等电影开场 等游戏更新 可我一直在等 却唯独不讨厌等到你的消息...”，每一次我都希望小宝能早些睡觉，好好睡觉，睡个饱饱的安稳觉，可是每次都会看到宝宝老早老早的就上号开瓦了，当看到这些时，心里也还是会难受，也许我也不该管那么多，宝宝无聊的时候可以玩嘟，可是我也希望宝宝能有健康的作息，健康的身体，希望宝宝能健健康康，开开心心的，如果你难受，我会很心疼的，我希望，你的一切病痛与不开心，应该都来找我，不要缠着你。",
+                    emoji: "🌙",
+                },
+                { 
+                    text: "> 🎮 昨天我玩了款游戏，叫《拣爱》",
+                    emoji: "🎮",
+                    hasImage: true,
+                    imageDesc: "游戏截图",
+                    imageUrl: "https://shop.3dmgame.com/upload/image/20230309/20230309100339_66814.jpg"
+                },
+               { 
+                    text: "> 🌈 这款游戏有三个不同的场景，游戏、距离、侦探。这个游戏主要就是通过设计一些场景，来让玩家进行互动，从而触发一些剧情和结局。",
+                    emoji: "🌈",
+                    hasImage: true,
+                    imageDesc: "游戏截图",
+                    imageUrl: "https://youke1.picui.cn/s1/2025/07/27/6885c436696d1.png"
+                },
+                 { 
+                    text: "> 🌈 我要扮演的是一个主人公，去面临不同的爱情故事。虽然第一次就达成了“钢铁直男的称号”，后续也认真认真去钻研，终于，获得了完美结局，我发现这个游戏里基本选择现有选项的都是低分项，这个游戏让我懂得：“急匆匆的选择只会让对方一次次的失望，其实，正确的答案永远都不在选项里，爱在细节里，在游戏里，你可以失败重来很多次，重新改变结局，可是现实中呢，现实可不能重开,所以，这告诉我，珍惜现实中的所遇到的那个重要的人。关掉游戏，属于我的拣爱二周目，才刚刚开始。希望我也能记住“爱在细节里，从不在选项里...",
+                    emoji: "🌈",
+                    hasImage: true,
+                    imageDesc: "游戏截图",
+                    imageUrl: "https://ts3.tc.mm.bing.net/th/id/OIP-C.Mg3GIT-_mUn0FZbjMn2I1gHaEK?rs=1&pid=ImgDetMain&o=7&rm=3"
+                },
+              { 
+                    text: "> 🌞 小宝，希望我能永远永远陪着你，在你需要我的时候，或遇到困难的时候，希望我将能成为你的守护者，站在你的前面，为你遮风挡雨，做你的小太阳。也希望小宝能够陪着我嘻嘻嘻ovo。好啦，就说这么多，快去神秘空间吧~",
+                    emoji: "🌞",
+                },
+                              { 
+                    text: "> ❤️ 永远喜欢小宝的LazyHan.",
+                    emoji: "❤️",
+                }
+            ];
+            
+            // 显示终端加载进度
+            let progress = 0;
+            const progressInterval = setInterval(function() {
+                progress += 5;
+                terminalProgress.style.width = progress + '%';
+                if (progress >= 100) {
+                    clearInterval(progressInterval);
+                    setTimeout(function() {
+                        // 显示终端内容
+                        displayContent(0);
+                    }, 300);
+                }
+            }, 50);
+            
+            // 显示终端内容
+            function displayContent(index) {
+                if (index >= content.length) {
+                    // 所有内容显示完成，显示按钮
+                    setTimeout(function() {
+                        mysteryButton.style.display = 'block';
+                        setTimeout(function() {
+                            mysteryButton.style.opacity = '1';
+                        }, 10);
+                    }, 500);
+                    return;
+                }
+                
+                const line = document.createElement('div');
+                line.className = 'terminal-line';
+                terminalContent.appendChild(line);
+                
+                // 打字效果
+                typeText(line, content[index], 0, function() {
+                    // 如果有图片占位符
+                    if (content[index].hasImage) {
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'image-placeholder';
+                        placeholder.innerHTML = `[IMAGE: ${content[index].imageDesc} - 点击查看...]`;
+                        placeholder.addEventListener('click', function() {
+                            const img = document.createElement('img');
+                            img.src = content[index].imageUrl;
+                            img.className = 'image-preview';
+                            img.style.display = 'block';
+                            placeholder.parentNode.insertBefore(img, placeholder.nextSibling);
+                            placeholder.style.display = 'none';
+                            
+                            // 自动继续下一段
+                            setTimeout(function() {
+                                displayContent(index + 1);
+                            }, 1000);
+                        });
+                        terminalContent.appendChild(placeholder);
+                    } else {
+                        // 继续下一段
+                        setTimeout(function() {
+                            displayContent(index + 1);
+                        }, 500 + Math.random() * 300);
+                    }
+                });
+                
+                // 滚动到底部
+                terminalContent.scrollTop = terminalContent.scrollHeight;
+            }
+            
+            // 打字效果函数
+            function typeText(element, content, charIndex, callback) {
+                if (charIndex < content.text.length) {
+                    const speed = 80; // 80ms/字
+                    
+                    // 如果是错误段落且到达错误位置
+                    if (content.hasError && charIndex === Math.floor(content.text.length / 2)) {
+                        // 先显示错误文本
+                        element.innerHTML = content.errorText.substring(0, charIndex) + '<span class="cursor"></span>';
+                        
+                        // 停顿300ms
+                        setTimeout(function() {
+                            // 删除错误文本
+                            deleteText(element, content.errorText, charIndex, function() {
+                                // 重新输入正确文本
+                                retypeText(element, content.correctText, 0, callback);
+                            });
+                        }, 300);
+                        return;
+                    }
+                    
+                    element.innerHTML = content.text.substring(0, charIndex + 1) + '<span class="cursor"></span>';
+                    
+                    // 随机停顿
+                    if (Math.random() < 0.1 && (content.text[charIndex] === '!' || content.text[charIndex] === '?')) {
+                        setTimeout(function() {
+                            typeText(element, content, charIndex + 1, callback);
+                        }, speed * (content.text[charIndex] === '!' ? 1.5 : 1.3));
+                    } else {
+                        setTimeout(function() {
+                            typeText(element, content, charIndex + 1, callback);
+                        }, speed);
+                    }
+                } else {
+                    callback();
+                }
+            }
+            
+            // 删除文本效果
+            function deleteText(element, text, charIndex, callback) {
+                if (charIndex >= 0) {
+                    element.innerHTML = text.substring(0, charIndex) + '<span class="cursor"></span>';
+                    setTimeout(function() {
+                        deleteText(element, text, charIndex - 1, callback);
+                    }, 50);
+                } else {
+                    callback();
+                }
+            }
+            
+            // 重新输入正确文本
+            function retypeText(element, text, charIndex, callback) {
+                if (charIndex < text.length) {
+                    element.innerHTML = text.substring(0, charIndex + 1) + '<span class="cursor"></span>';
+                    setTimeout(function() {
+                        retypeText(element, text, charIndex + 1, callback);
+                    }, 50);
+                } else {
+                    callback();
+                }
+            }
+            
+            // 神秘世界按钮点击事件（修改为跳转到index3.html）
+            mysteryButton.addEventListener('click', function() {
+                // 淡出终端窗口
+                terminalWindow.style.opacity = '0';
+                terminalWindow.style.transition = 'opacity 0.3s ease';
+                
+                // 确保音乐在跳转前播放
+                bgMusic.play();
+                
+                setTimeout(function() {
+                    // 隐藏终端窗口
+                    terminalWindow.style.display = 'none';
+                    
+                    // 显示神秘世界（作为过渡）
+                    mysteryWorld.style.display = 'flex';
+                    
+                    // 淡入神秘世界
+                    setTimeout(function() {
+                        mysteryWorld.style.opacity = '1';
+                        
+                        // 3秒后跳转到index3.html
+                        setTimeout(function() {
+                            window.location.href = "index3.html";
+                        }, 3000);
+                    }, 50);
+                }, 300);
+            });
+            
+            // 初始化粒子系统（用于过渡页面）
+            function initParticles() {
+                if (typeof particlesJS !== 'undefined') {
+                    particlesJS('particles-js', {
+                        particles: {
+                            number: {
+                                value: 300,
+                                density: {
+                                    enable: true,
+                                    value_area: 800
+                                }
+                            },
+                            color: {
+                                value: ['#FF69B4', '#B0E0E6', '#E6E6FA']
+                            },
+                            shape: {
+                                type: 'circle',
+                                stroke: {
+                                    width: 0,
+                                    color: '#000000'
+                                },
+                                polygon: {
+                                    nb_sides: 5
+                                }
+                            },
+                            opacity: {
+                                value: 0.5,
+                                random: true,
+                                anim: {
+                                    enable: true,
+                                    speed: 1,
+                                    opacity_min: 0.1,
+                                    sync: false
+                                }
+                            },
+                            size: {
+                                value: 3,
+                                random: true,
+                                anim: {
+                                    enable: true,
+                                    speed: 2,
+                                    size_min: 0.3,
+                                    sync: false
+                                }
+                            },
+                            line_linked: {
+                                enable: false,
+                                distance: 150,
+                                color: '#ffffff',
+                                opacity: 0.4,
+                                width: 1
+                            },
+                            move: {
+                                enable: true,
+                                speed: 1,
+                                direction: 'none',
+                                random: true,
+                                straight: false,
+                                out_mode: 'out',
+                                bounce: false,
+                                attract: {
+                                    enable: true,
+                                    rotateX: 600,
+                                    rotateY: 1200
+                                }
+                            }
+                        },
+                        interactivity: {
+                            detect_on: 'canvas',
+                            events: {
+                                onhover: {
+                                    enable: true,
+                                    mode: 'repulse'
+                                },
+                                onclick: {
+                                    enable: true,
+                                    mode: 'push'
+                                },
+                                resize: true
+                            },
+                            modes: {
+                                grab: {
+                                    distance: 400,
+                                    line_linked: {
+                                        opacity: 1
+                                    }
+                                },
+                                bubble: {
+                                    distance: 400,
+                                    size: 40,
+                                    duration: 2,
+                                    opacity: 8,
+                                    speed: 3
+                                },
+                                repulse: {
+                                    distance: 100,
+                                    duration: 0.4
+                                },
+                                push: {
+                                    particles_nb: 4
+                                },
+                                remove: {
+                                    particles_nb: 2
+                                }
+                            }
+                        },
+                        retina_detect: true
+                    });
+                }
+                
+                // 创建飘落的爱心和星星
+                setInterval(function() {
+                    const types = ['heart', 'star', 'note'];
+                    const type = types[Math.floor(Math.random() * types.length)];
+                    const element = document.createElement('div');
+                    
+                    if (type === 'heart') {
+                        element.className = 'falling-heart';
+                        element.innerHTML = '❤️';
+                        element.style.color = '#FF69B4';
+                    } else if (type === 'star') {
+                        element.className = 'falling-star';
+                        element.innerHTML = '⭐';
+                        element.style.color = '#B0E0E6';
+                    } else {
+                        element.className = 'falling-note';
+                        element.innerHTML = '🎵';
+                        element.style.color = '#E6E6FA';
+                    }
+                    
+                    element.style.left = Math.random() * 100 + 'vw';
+                    element.style.animationDuration = (Math.random() * 3 + 5) + 's';
+                    element.style.fontSize = (Math.random() * 10 + 15) + 'px';
+                    
+                    document.body.appendChild(element);
+                    
+                    // 移除元素
+                    setTimeout(function() {
+                        element.remove();
+                    }, 8000);
+                }, 300);
+            }
+            
+            // 音乐控制按钮
+            musicControl.addEventListener('click', function() {
+                if (bgMusic.paused) {
+                    bgMusic.play();
+                    musicControl.innerHTML = '<i class="fas fa-music" style="display: none;"></i>';
+                } else {
+                    bgMusic.pause();
+                    musicControl.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                }
+            });
+            
+            // 微信环境检测
+            document.addEventListener('WeixinJSBridgeReady', function() {
+                bgMusic.play();
+            }, false);
+            
+            // 初始化粒子系统
+            initParticles();
+        });
+    </script>
+</body>
+</html>
