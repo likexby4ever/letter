@@ -8,9 +8,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <style>
         @font-face {
-            font-family: 'Handwriting';
-            src: local('Comic Sans MS'), local('楷体');
-        }
+  font-family: '方正喵呜体';
+  src: url('fonts/方正喵呜体.ttf') format('truetype'), /* 优先使用TTF */
+       url('fonts/方正喵呜体.woff2') format('woff2'),
+       url('fonts/方正喵呜体.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
         
         body {
             margin: 0;
